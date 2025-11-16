@@ -1,0 +1,63 @@
+# Arquivo .gitignore para projetos Python, ML e Pyenv
+
+# --- Ambientes Virtuais (Venv) ---
+# Ignora a pasta .venv que você pediu e outros nomes comuns
+/.venv/
+/venv/
+/env/
+/lib/
+/lib64/
+/include/
+/share/
+
+# --- Pyenv ---
+# Ignora o arquivo de versão local do pyenv
+.python-version
+
+# --- Machine Learning e Dados (MUITO IMPORTANTE) ---
+# Ignora modelos de IA salvos (binários grandes)
+*.pkl
+*.h5
+*.model
+*.joblib
+
+# Ignora arquivos de dados gerados (como seu hand_landmarks.csv)
+*.csv
+*.data
+
+# Ignora pastas grandes de dataset (o Git não foi feito para isso)
+/dataset/
+/data/
+/datasets/
+
+# --- Cache e Arquivos Compilados do Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Pastas de Build e Distribuição ---
+/build/
+/dist/
+*.egg-info/
+/sdist/
+*.egg
+
+# --- Arquivos de IDE e Configuração Local ---
+# VSCode
+.vscode/
+# PyCharm
+.idea/
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# --- Logs ---
+*.log
+*.sqlite3
+
+# --- Arquivos de Sistema Operacional ---
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+desktop.ini
