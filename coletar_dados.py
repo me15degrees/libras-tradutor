@@ -4,7 +4,8 @@ import os
 import csv
 
 
-DATA_DIR = '/home/me15degrees/Programação/libras-tradutor/dataset'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, 'dataset')
 
 OUTPUT_FILE = 'hand_landmarks.csv'
 
