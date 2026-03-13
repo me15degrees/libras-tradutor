@@ -15,7 +15,6 @@ USE_WEBCAM = False
 URL_CELULAR = "http://192.168.100.182:8080/video" 
 
 try:
-    # Carregando com os nomes de arquivos que você enviou via scp
     model = joblib.load('libras_rf_model.pkl')
     le = joblib.load('label_encoder.pkl')
 except FileNotFoundError:
@@ -78,7 +77,6 @@ try:
                 letra_predita = le.inverse_transform(prediction_numeric)[0]
                 status_msg = f"Letra Detectada: {letra_predita}   "
 
-        # O SEGREDO: Imprime e sobrescreve a mesma linha no terminal
         sys.stdout.write(f"\r{status_msg}")
         sys.stdout.flush()
 
