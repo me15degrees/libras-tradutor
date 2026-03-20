@@ -3,39 +3,35 @@ import mediapipe as mp
 import joblib
 import numpy as np
 import sys
-import warnings
-
-# Silenciar avisos de versão do scikit-learn para limpar o terminal
-warnings.filterwarnings("ignore", category=UserWarning)
 
 # Mude para False se quiser usar o IP do celular
 USE_WEBCAM = False 
 
 # Se USE_WEBCAM for False, mude o IP abaixo
-URL_CELULAR = "http://192.168.100.182:8080/video" 
+URL_CELULAR = "http://10.10.125.46:8080/video" 
 
 try:
     model = joblib.load('libras_rf_model.pkl')
     le = joblib.load('label_encoder.pkl')
 except FileNotFoundError:
-    print("Erro: Arquivos '.pkl' não encontrados no diretório atual.")
+    print("Erro: Arquivos 'libras_rf_model.pkl' ou 'label_encoder.pkl' não encontrados.")
+    print("Certifique-se de que os arquivos da Fase 2 estão no mesmo diretório.")
     sys.exit()
 
-print("--- Tradutor de Libras Ativo ---")
-print(f"Letras mapeadas: {le.classes_}")
+print("Modelo e LabelEncoder carregados com sucesso!")
+print(f"O modelo foi treinado para reconhecer estas letras: {le.classes_}")
 
 if USE_WEBCAM:
     cap = cv2.VideoCapture(0) 
-    print("Usando Webcam USB...")
+    print("Usando Webcam (0)...")
 else:
     cap = cv2.VideoCapture(URL_CELULAR)
-    print(f"Conectando ao celular: {URL_CELULAR}...")
+    print(f"Tentando conectar ao celular: {URL_CELULAR}...")
 
 if not cap.isOpened():
-    print("Erro! Verifique a conexão com a câmera.")
+    print("Erro! Não foi possível abrir a câmera.")
     sys.exit()
 
-# Configuração do MediaPipe
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(
     static_image_mode=False,
@@ -43,48 +39,50 @@ hands = mp_hands.Hands(
     min_detection_confidence=0.7,    
     min_tracking_confidence=0.5
 )
+mp_drawing = mp.solutions.drawing_utils
 
-print("Iniciando detecção... Pressione CTRL+C no terminal para sair.")
+print("Câmera iniciada. Pressione 'q' para sair.")
 
-# Reduzir resolução para economizar CPU no Raspberry Pi
-LARGURA_PROC = 320  
-ALTURA_PROC = 240
+LARGURA_PROC = 480  
+ALTURA_PROC = 360
 
-try:
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("\nFalha ao receber frame da câmera.")
-            break
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-        # Redimensionamento e Conversão
-        frame = cv2.resize(frame, (LARGURA_PROC, ALTURA_PROC))
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        results = hands.process(frame_rgb)
+    frame = cv2.resize(frame, (LARGURA_PROC, ALTURA_PROC))
 
-        status_msg = "Aguardando mão..."
+    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE) #rotação
 
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                data_row = []
-                for landmark in hand_landmarks.landmark:
-                    data_row.extend([landmark.x, landmark.y, landmark.z])
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = hands.process(frame_rgb)
 
-                # Predição
-                landmarks_array = np.array([data_row]) 
-                prediction_numeric = model.predict(landmarks_array) 
-                letra_predita = le.inverse_transform(prediction_numeric)[0]
-                status_msg = f"Letra Detectada: {letra_predita}   "
+    letra_predita = "" 
 
-        sys.stdout.write(f"\r{status_msg}")
-        sys.stdout.flush()
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+            # Desenhar apenas se necessário (consome CPU)
+            mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-except KeyboardInterrupt:
-    print("\nInterrompido pelo usuário.")
+            data_row = []
+            for landmark in hand_landmarks.landmark:
+                data_row.extend([landmark.x, landmark.y, landmark.z])
 
-finally:
-    print("Encerrando recursos...")
-    cap.release()
-    hands.close()
-    print("Pronto.")
+            landmarks_array = np.array([data_row]) 
+            prediction_numeric = model.predict(landmarks_array) 
+            letra_predita = le.inverse_transform(prediction_numeric)[0] 
+    
+    # Interface gráfica simplificada
+    cv2.putText(frame, f"Letra: {letra_predita}", (10, 50), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+    cv2.imshow('Orange Pi LIBRAS', frame)
+    
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+print("\nEncerrando...")
+cap.release()
+cv2.destroyAllWindows()
+hands.close()
