@@ -84,9 +84,9 @@ pip install opencv-python mediapipe pandas scikit-learn joblib numpy
 
 - Anote o IP exibido (ex: http://192.168.0.10:8080/video).
 
-- No arquivo fase3_webcam.py (ou equivalente), altere a variável URL_CELULAR com o seu IP.
+- No arquivo detectar_libras_celular.py (ou equivalente), altere a variável URL_CELULAR com o seu IP.
 
 Execute o script:
 ```bash
-python fase3_webcam.py
+python detectar_libras_celular.py
 ```
