@@ -1,12 +1,12 @@
 import os
 import random
 
-# --- CONFIGURAÇÕES ---
+
 BASE_DATASET = "dataset"
 LETRAS = ['A', 'B', 'C', 'D', 'E', 'I', 'L', 'M', 'N', 'O', 'R', 'S', 'U', 'V', 'W']
-PERCENTUAL_MIGRAR = 0.20  # 20% do que está no treino vai para o teste
+PERCENTUAL_MIGRAR = 0.20  
 
-print(f"📦 Iniciando migração de {PERCENTUAL_MIGRAR*100}% dos dados de TRAIN para TEST...")
+print(f" Iniciando migração de {PERCENTUAL_MIGRAR*100}% dos dados de TRAIN para TEST...")
 
 for letra in LETRAS:
     caminho_treino = os.path.join(BASE_DATASET, 'train', letra)
@@ -24,7 +24,7 @@ for letra in LETRAS:
     arquivos = [f for f in os.listdir(caminho_treino) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
     
     if len(arquivos) == 0:
-        print(f"❓ Letra {letra}: Nenhuma imagem encontrada no treino.")
+        print(f"Letra {letra}: Nenhuma imagem encontrada no treino.")
         continue
 
     # Sorteia quais arquivos serão movidos
@@ -40,6 +40,6 @@ for letra in LETRAS:
         destino = os.path.join(caminho_teste, img)
         os.replace(origem, destino)
 
-    print(f"✅ Letra {letra}: {quantidade_para_mover} imagens migradas para TEST.")
+    print(f"Letra {letra}: {quantidade_para_mover} imagens migradas para TEST.")
 
 print("\n--- Migração concluída! ---")

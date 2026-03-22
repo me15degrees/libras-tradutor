@@ -8,11 +8,10 @@ BASE_DATASET = "dataset"
 FPS_TARGET = 5       
 split_ratio = 0.8  # 80% para treino, 20% para teste
 
-# Inicializar MediaPipe
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.7)
 
-# Criar estrutura básica
+
 for folder in ['train', 'test']:
     os.makedirs(os.path.join(BASE_DATASET, folder), exist_ok=True)
 
@@ -37,7 +36,7 @@ for video_name in video_files:
 
     print(f"Lendo vídeo da Letra {letra}...")
 
-    # Primeiro passo: Coletar todos os frames onde a mão aparece
+    # Coletar todos os frames onde a mão aparece
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret: break
@@ -51,7 +50,7 @@ for video_name in video_files:
         frame_idx += 1
     cap.release()
 
-    # Segundo passo: Dividir e Salvar
+    # Dividir nas duas pastas e Salvar
     num_train = int(len(frames_validos) * split_ratio)
     
     for i, f in enumerate(frames_validos):
