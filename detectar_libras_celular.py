@@ -8,7 +8,7 @@ import sys
 USE_WEBCAM = False 
 
 # Se USE_WEBCAM for False, mude o IP abaixo
-URL_CELULAR = "http://10.10.125.46:8080/video" 
+URL_CELULAR = "http://192.169.100.218:8080/video" 
 
 try:
     model = joblib.load('libras_rf_model.pkl')
