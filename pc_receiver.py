@@ -17,9 +17,6 @@ import time
 import collections
 import threading
 
-# ─────────────────────────────────────────────
-# CONFIGURAÇÕES
-# ─────────────────────────────────────────────
 URL_CELULAR       = "http://192.168.100.218:8080/video"
 ROTACIONAR        = True
 
@@ -49,10 +46,7 @@ C_VERMELHO= (70,  70,  220)
 C_BRANCO  = (240, 240, 240)
 C_CINZA   = (130, 130, 145)
 C_LINHA   = (60,  60,  75)
-# ─────────────────────────────────────────────
 
-
-# ── Estado compartilhado entre thread ZMQ e loop principal ──────────
 estado = {
     "letra":     "",
     "confianca": 0.0,
@@ -144,36 +138,10 @@ HAND_CONNECTIONS = [
     (0,17)
 ]
 
-def desenhar_landmarks(frame, landmarks):
-    """Desenha pontos e conexões da mão no frame do PC."""
-    if not landmarks:
-        return frame
-    h, w = frame.shape[:2]
-
-    # Converte coordenadas normalizadas para pixels
-    pts = [(int(lm["x"] * w), int(lm["y"] * h)) for lm in landmarks]
-
-    # Conexões
-    for a, b in HAND_CONNECTIONS:
-        if a < len(pts) and b < len(pts):
-            cv2.line(frame, pts[a], pts[b], (0, 200, 80), 2, cv2.LINE_AA)
-
-    # Pontos
-    for i, (x, y) in enumerate(pts):
-        # Ponta dos dedos em destaque
-        cor  = (0, 255, 120) if i in (4, 8, 12, 16, 20) else (255, 255, 255)
-        raio = 6 if i in (4, 8, 12, 16, 20) else 4
-        cv2.circle(frame, (x, y), raio, (0, 0, 0), -1)
-        cv2.circle(frame, (x, y), raio - 1, cor, -1)
-
-    return frame
-
-
 def montar_janela(frame_cam, letra, confianca, latencia, historico, sem_sinal, landmarks):
     canvas = np.zeros((TELA_H, TELA_W, 3), dtype=np.uint8)
     canvas[:] = C_BG
 
-    # ── Header (topo, largura total) ────────────────────────────────
     cv2.rectangle(canvas, (0, 0), (TELA_W, HEADER_H), C_HEADER, -1)
     cv2.line(canvas, (0, HEADER_H), (TELA_W, HEADER_H), C_LINHA, 2)
 
@@ -184,13 +152,9 @@ def montar_janela(frame_cam, letra, confianca, latencia, historico, sem_sinal, l
     s_cor  = C_AMARELO if sem_sinal else C_VERDE
     cv2.putText(canvas, status, (TELA_W - 360, 42),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.9, s_cor, 1, cv2.LINE_AA)
-
-    # ── Frame da câmera (esquerda) ───────────────────────────────────
     cam_resized = cv2.resize(frame_cam, (CAM_W, CAM_H))
-    cam_resized = desenhar_landmarks(cam_resized, landmarks)
+    
     canvas[HEADER_H:HEADER_H + CAM_H, 0:CAM_W] = cam_resized
-
-    # ── Painel direito ───────────────────────────────────────────────
     px = CAM_W
     py = HEADER_H
     cv2.rectangle(canvas, (px, py), (TELA_W, TELA_H), C_PAINEL, -1)
@@ -199,7 +163,6 @@ def montar_janela(frame_cam, letra, confianca, latencia, historico, sem_sinal, l
     m = 50   # margem interna do painel
     y = py + 80
 
-    # ── CONFIANÇA ───────────────────────────────────────────────────
     cv2.putText(canvas, "CONFIANCA", (px + m, y),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.1, C_CINZA, 2, cv2.LINE_AA)
     y += 50
@@ -213,14 +176,12 @@ def montar_janela(frame_cam, letra, confianca, latencia, historico, sem_sinal, l
                 cv2.FONT_HERSHEY_SIMPLEX, 1.4,
                 cor_confianca(confianca) if letra else C_CINZA, 2, cv2.LINE_AA)
 
-    # Divisor
     y += 55
     cv2.line(canvas, (px + m, y), (TELA_W - m, y), C_LINHA, 2)
     y += 60
 
-    # ── LETRA ────────────────────────────────────────────────────────
     cv2.putText(canvas, "LETRA", (px + m, y),
-                cv2.FONT_HERSHEY_SIMPLEX, 1.1, C_CINZA, 2, cv2.LINE_AA)
+                cv2.FONT_HERSHEY_SIMPLEX, 1, C_CINZA, 2, cv2.LINE_AA)
     y += 30
 
     if letra and not sem_sinal:
@@ -236,11 +197,10 @@ def montar_janela(frame_cam, letra, confianca, latencia, historico, sem_sinal, l
                     cv2.FONT_HERSHEY_DUPLEX, 6.0, C_CINZA, 6, cv2.LINE_AA)
     y += 130
 
-    # Divisor
+ 
     cv2.line(canvas, (px + m, y), (TELA_W - m, y), C_LINHA, 2)
     y += 55
 
-    # ── HISTÓRICO ────────────────────────────────────────────────────
     cv2.putText(canvas, "HISTORICO", (px + m, y),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.1, C_CINZA, 2, cv2.LINE_AA)
     y += 55
@@ -255,15 +215,13 @@ def montar_janela(frame_cam, letra, confianca, latencia, historico, sem_sinal, l
                     cv2.FONT_HERSHEY_SIMPLEX, 1.3, C_BRANCO, 2, cv2.LINE_AA)
         y += 55
 
-    # ── Rodapé ───────────────────────────────────────────────────────
+
     cv2.putText(canvas, "[Q] Sair    [C] Limpar historico",
                 (px + m, TELA_H - 25),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.75, C_CINZA, 1, cv2.LINE_AA)
 
     return canvas
 
-
-# ── Thread da câmera — descarta buffer, guarda só frame mais recente ──
 frame_lock   = threading.Lock()
 frame_atual  = {"img": None}
 camera_viva  = True
@@ -276,7 +234,6 @@ def thread_camera():
         camera_viva = False
         return
 
-    # Desativa buffer interno do OpenCV (reduz latência)
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
     print(f"[OK] Câmera conectada: {URL_CELULAR}")
 
